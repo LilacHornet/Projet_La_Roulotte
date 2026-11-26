@@ -1,33 +1,41 @@
 import type { MenuRepository } from "./menu.repository.js";
-import type { DishesQuery, CreateDishInput, UpdateDishInput } from "./menu.dto.js";
-import { AppError } from "../../errors/app.error.js";
+import {
+  toAllergenDto,
+  toCategoryDto,
+  toDishDto,
+  type DishesQuery,
+  type CreateDishInput,
+  type UpdateDishInput,
+} from "./menu.dto.js";
+import { AppError } from "../../errors/app-error.js";
 
 export class MenuService {
   constructor(private repo: MenuRepository) {}
 
-  listCategories() {
-    return this.repo.findCategories();
+  async listCategories() {
+    return (await this.repo.findCategories()).map(toCategoryDto);
   }
 
-  listAllergens() {
-    return this.repo.findAllergens();
+  async listAllergens() {
+    return (await this.repo.findAllergens()).map(toAllergenDto);
   }
 
-  getDish(id: number) {
-    return this.repo.findDishById(id);
+  async getDish(id: number) {
+    const dish = await this.repo.findDishById(id);
+    return dish ? toDishDto(dish) : null;
   }
 
   async listDishes(query: DishesQuery) {
     const [items, total] = await this.repo.findDishes(query);
-    return { items, total, page: query.page, pageSize: query.pageSize };
+    return { items: items.map(toDishDto), total, page: query.page, pageSize: query.pageSize };
   }
-  
-    async createDish(input: CreateDishInput) {
+
+  async createDish(input: CreateDishInput) {
     if (await this.repo.findDishByName(input.name)) {
       throw new AppError(409, "CONFLICT", "Nom de plat déjà pris");
     }
     await this.checkReferences(input.categoryId, input.allergens);
-    return this.repo.createDish(input);
+    return toDishDto(await this.repo.createDish(input));
   }
 
   async updateDish(id: number, input: UpdateDishInput) {
@@ -38,7 +46,7 @@ export class MenuService {
       throw new AppError(409, "CONFLICT", "Nom de plat déjà pris");
     }
     await this.checkReferences(input.categoryId, input.allergens);
-    return this.repo.updateDish(id, input);
+    return toDishDto(await this.repo.updateDish(id, input));
   }
 
   async deleteDish(id: number) {
@@ -62,5 +70,4 @@ export class MenuService {
       }
     }
   }
-
 }

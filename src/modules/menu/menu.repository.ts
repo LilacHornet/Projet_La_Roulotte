@@ -1,7 +1,37 @@
 import type { Db } from "../../db/prisma.js";
 import type { DishesQuery, CreateDishInput, UpdateDishInput } from "./menu.dto.js";
 
-export class MenuRepository {
+export type MenuCategoryRecord = { id: number; name: string; position: number };
+export type MenuAllergenRecord = { id: number; code: string; label: string };
+
+export type MenuDishRecord = {
+  id: number;
+  name: string;
+  description: string;
+  priceCents: number;
+  available: boolean;
+  stock: number | null;
+  category: { id: number; name: string };
+  allergens: { code: string; label: string }[];
+};
+
+export interface MenuRepository {
+  findCategories(): Promise<MenuCategoryRecord[]>;
+  findAllergens(): Promise<MenuAllergenRecord[]>;
+  findDishById(id: number): Promise<MenuDishRecord | null>;
+  findDishes(query: DishesQuery): Promise<[MenuDishRecord[], number]>;
+  
+  findDishByName(name: string): Promise<{ id: number; name: string } | null>;
+  findCategoryById(id: number): Promise<MenuCategoryRecord | null>;
+  findAllergensByCodes(codes: string[]): Promise<MenuAllergenRecord[]>;
+  countOrdersForDish(dishId: number): Promise<number>;
+
+  createDish(data: CreateDishInput): Promise<MenuDishRecord>;
+  updateDish(id: number, data: UpdateDishInput): Promise<MenuDishRecord>;
+  deleteDish(id: number): Promise<unknown>;
+}
+
+export class PrismaMenuRepository implements MenuRepository {
   constructor(private db: Db) {}
 
   findCategories() {
@@ -13,14 +43,11 @@ export class MenuRepository {
   }
 
   findDishById(id: number) {
-    return this.db.dish.findUnique({
-      where: { id },
-      include: { category: true, allergens: true },
-    });
+    return this.db.dish.findUnique({ where: { id }, include: { category: true, allergens: true } });
   }
 
   findDishes(query: DishesQuery) {
-    const codes = query.allergenFree?.split(",").map((c) => c.trim()).filter(Boolean) ?? [];
+    const codes = query.allergenFree?.split(",").map((code) => code.trim()).filter(Boolean) ?? [];
 
     const where = {
       categoryId: query.category,
@@ -85,5 +112,4 @@ export class MenuRepository {
   deleteDish(id: number) {
     return this.db.dish.delete({ where: { id } });
   }
-
 }
