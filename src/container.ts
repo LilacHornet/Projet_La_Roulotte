@@ -35,7 +35,7 @@ const ordersRouter = createOrdersRouter(orderController, auth);
 export const container = {
     auth,
     healthRouter: createHealthRouter(healthController),
-    menuRouter: menuRoutes(menuController),
+    menuRouter: menuRoutes(menuController, auth),
     ordersRouter,
     corsOrigin: config.corsOrigin,
 };

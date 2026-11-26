@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import type { MenuService } from "./menu.service.js";
-import { dishesQuerySchema } from "./menu.dto.js";
+import { dishesQuerySchema, createDishSchema, updateDishSchema, idParamSchema } from "./menu.dto.js";
 
 export class MenuController {
   constructor(private service: MenuService) {}
@@ -43,6 +43,24 @@ export class MenuController {
     }
 
     res.json(dish);
+  };
+
+  createDish = async (req: Request, res: Response) => {
+    const input = createDishSchema.parse(req.body);
+    const dish = await this.service.createDish(input);
+    res.status(201).location(`/dishes/${dish.id}`).json(dish);
+  };
+
+  updateDish = async (req: Request, res: Response) => {
+    const { id } = idParamSchema.parse(req.params);
+    const input = updateDishSchema.parse(req.body);
+    res.json(await this.service.updateDish(id, input));
+  };
+
+  deleteDish = async (req: Request, res: Response) => {
+    const { id } = idParamSchema.parse(req.params);
+    await this.service.deleteDish(id);
+    res.status(204).end();
   };
 
 }
