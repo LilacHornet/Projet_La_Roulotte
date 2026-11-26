@@ -109,6 +109,23 @@ export class OrderService {
             0,
         );
 
+        const outOfStock = input.items.flatMap(({ dishId, quantity }) => {
+            const dish = dishesById.get(dishId);
+
+            return dish && dish.stock !== null && quantity > dish.stock
+                ? [{ dishId, available: dish.stock }]
+                : [];
+        });
+
+        if (outOfStock.length > 0) {
+            throw new AppError(
+                409,
+                "OUT_OF_STOCK",
+                "Stock insuffisant",
+                outOfStock,
+            );
+        }
+
         const order = await this.orders.create({
             userId,
             note: input.note ?? null,
@@ -234,7 +251,11 @@ export class OrderService {
             }
 
             if (order.status !== "RECEIVED") {
-                throw new AppError(403, "FORBIDDEN", "Cette commande ne peut plus être annulée par le client");
+                throw new AppError(
+                    409,
+                    "INVALID_TRANSITION",
+                    "Transition de statut interdite",
+                );
             }
         }
 

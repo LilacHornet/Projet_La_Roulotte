@@ -33,10 +33,13 @@ function makeOrderRecord(
     };
 }
 
-function makeOrderRecordForOwner(ownerId: number): OrderRecord {
+function makeOrderRecordForOwner(
+    ownerId: number,
+    status: OrderRecord["status"] = "RECEIVED",
+): OrderRecord {
     return {
         id: 21,
-        status: "RECEIVED",
+        status,
         note: null,
         totalCents: 2300,
         createdAt: new Date("2026-11-26T10:00:00.000Z"),
@@ -63,6 +66,7 @@ function makeRepository(options: {
         createdOrders: [] as NewOrder[],
         listFilters: [] as Parameters<OrderRepository["list"]>[0][],
         foundIds: [] as number[],
+        statusUpdates: [] as Parameters<OrderRepository["updateStatus"]>[],
     };
 
     const repository: OrderRepository = {
@@ -83,6 +87,7 @@ function makeRepository(options: {
             return options.orderById ?? null;
         },
         async updateStatus(id, expectedStatus, newStatus) {
+            calls.statusUpdates.push([id, expectedStatus, newStatus]);
             const order = options.orderById;
 
             if (!order || order.id !== id || order.status !== expectedStatus) {
@@ -109,8 +114,8 @@ describe("OrderService.place", () => {
     it("uses database prices and calculates line and order totals", async () => {
         const { repository, calls } = makeRepository({
             dishes: [
-                { id: 7, priceCents: 1150, available: true },
-                { id: 8, priceCents: 400, available: true },
+                { id: 7, priceCents: 1150, available: true, stock: null },
+                { id: 8, priceCents: 400, available: true, stock: null },
             ],
         });
         const service = new OrderService(repository);
@@ -177,8 +182,8 @@ describe("OrderService.place", () => {
     it("reports every missing or unavailable dish without creating an order", async () => {
         const { repository, calls } = makeRepository({
             dishes: [
-                { id: 7, priceCents: 1150, available: false },
-                { id: 8, priceCents: 400, available: false },
+                { id: 7, priceCents: 1150, available: false, stock: null },
+                { id: 8, priceCents: 400, available: false, stock: null },
             ],
         });
         const service = new OrderService(repository);
@@ -206,6 +211,25 @@ describe("OrderService.place", () => {
                 { dishId: 8, reason: "UNAVAILABLE" },
             ],
         });
+        expect(calls.createdOrders).toHaveLength(0);
+    });
+
+    it("rejects quantities exceeding limited stock", async () => {
+        const { repository, calls } = makeRepository({
+            dishes: [
+                { id: 7, priceCents: 1150, available: true, stock: 1 },
+            ],
+        });
+        const service = new OrderService(repository);
+
+        await expect(service.place(5, {
+            items: [{ dishId: 7, quantity: 2 }],
+        })).rejects.toMatchObject({
+            status: 409,
+            code: "OUT_OF_STOCK",
+            details: [{ dishId: 7, available: 1 }],
+        });
+
         expect(calls.createdOrders).toHaveLength(0);
     });
 });
@@ -310,6 +334,120 @@ describe("OrderService.getById", () => {
             .rejects.toMatchObject({ status: 400, code: "VALIDATION_ERROR" });
 
         expect(calls.foundIds).toHaveLength(0);
+    });
+});
+
+describe("OrderService.updateStatus", () => {
+    const staff: AuthUser = { id: 6, role: "STAFF" };
+
+    const validTransitions = [
+        { from: "RECEIVED", to: "PREPARING" },
+        { from: "RECEIVED", to: "CANCELLED" },
+        { from: "PREPARING", to: "READY" },
+        { from: "PREPARING", to: "CANCELLED" },
+        { from: "READY", to: "PICKED_UP" },
+        { from: "READY", to: "CANCELLED" },
+    ] as const;
+
+    it.each(validTransitions)(
+        "accepte $from -> $to pour le personnel",
+        async ({ from, to }) => {
+            const order: OrderRecord = {
+                ...makeOrderRecordForOwner(5),
+                status: from,
+            };
+            const { repository, calls } = makeRepository({ orderById: order });
+
+            const result = await new OrderService(repository).updateStatus(
+                staff,
+                "21",
+                { status: to },
+            );
+
+            expect(result.status).toBe(to);
+            expect(calls.statusUpdates).toEqual([[21, from, to]]);
+        },
+    );
+
+    it("permet au client d’annuler sa propre commande reçue", async () => {
+        const { repository, calls } = makeRepository({
+            orderById: makeOrderRecordForOwner(customer.id),
+        });
+
+        const result = await new OrderService(repository).updateStatus(
+            customer,
+            "21",
+            { status: "CANCELLED" },
+        );
+
+        expect(result.status).toBe("CANCELLED");
+        expect(calls.statusUpdates).toEqual([[21, "RECEIVED", "CANCELLED"]]);
+    });
+
+    it("refuse au client de faire avancer sa commande", async () => {
+        const { repository, calls } = makeRepository({
+            orderById: makeOrderRecordForOwner(customer.id),
+        });
+
+        await expect(
+            new OrderService(repository).updateStatus(customer, "21", {
+                status: "PREPARING",
+            }),
+        ).rejects.toMatchObject({ status: 403, code: "FORBIDDEN" });
+
+        expect(calls.statusUpdates).toHaveLength(0);
+    });
+
+    it("refuse l’annulation par un client après réception", async () => {
+        const order: OrderRecord = {
+            ...makeOrderRecordForOwner(customer.id),
+            status: "PREPARING",
+        };
+        const { repository, calls } = makeRepository({ orderById: order });
+
+        await expect(
+            new OrderService(repository).updateStatus(customer, "21", {
+                status: "CANCELLED",
+            }),
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "INVALID_TRANSITION",
+        });
+
+        expect(calls.statusUpdates).toHaveLength(0);
+    });
+
+    it("refuse une transition impossible pour le personnel", async () => {
+        const order: OrderRecord = {
+            ...makeOrderRecordForOwner(5),
+            status: "PICKED_UP",
+        };
+        const { repository, calls } = makeRepository({ orderById: order });
+
+        await expect(
+            new OrderService(repository).updateStatus(staff, "21", {
+                status: "CANCELLED",
+            }),
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "INVALID_TRANSITION",
+        });
+
+        expect(calls.statusUpdates).toHaveLength(0);
+    });
+
+    it("masque au client les commandes appartenant à quelqu’un d’autre", async () => {
+        const { repository, calls } = makeRepository({
+            orderById: makeOrderRecordForOwner(12),
+        });
+
+        await expect(
+            new OrderService(repository).updateStatus(customer, "21", {
+                status: "CANCELLED",
+            }),
+        ).rejects.toMatchObject({ status: 404, code: "NOT_FOUND" });
+
+        expect(calls.statusUpdates).toHaveLength(0);
     });
 });
 

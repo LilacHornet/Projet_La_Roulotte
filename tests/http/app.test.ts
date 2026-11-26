@@ -35,7 +35,7 @@ function makeTestApp() {
   });
 
   const dishes: DishForOrder[] = [
-    { id: 7, priceCents: 1150, available: true },
+    { id: 7, priceCents: 1150, available: true, stock: null },
   ];
   const orders: OrderRecord[] = [];
 
@@ -80,8 +80,28 @@ function makeTestApp() {
     async findById(id) {
       return orders.find((order) => order.id === id) ?? null;
     },
-    updateStatus: function (id: number, expectedStatus: OrderStatus, newStatus: OrderStatus): Promise<OrderRecord | null> {
-      throw new Error("Function not implemented.");
+    updateStatus: async function (id: number, expectedStatus: OrderStatus, newStatus: OrderStatus): Promise<OrderRecord | null> {
+      const index = orders.findIndex(
+        (order) => order.id === id && order.status === expectedStatus,
+      );
+
+      if (index === -1) {
+        return null;
+      }
+
+      const order = orders[index];
+      if (!order) {
+        return null;
+      }
+
+      const updatedOrder: OrderRecord = {
+        ...order,
+        status: newStatus,
+        updatedAt: new Date("2026-11-26T10:05:00.000Z"),
+      };
+
+      orders[index] = updatedOrder;
+      return updatedOrder;
     }
   };
 
@@ -170,5 +190,41 @@ describe("HTTP API", () => {
       .get("/orders/999")
       .set("Authorization", authorization);
     expect(missing.status).toBe(404);
+  });
+
+  it("permet au client d’annuler une commande reçue via l’API", async () => {
+    const app = makeTestApp();
+    const token = await registerAndLogin(app);
+    const authorization = `Bearer ${token}`;
+
+    const created = await request(app)
+      .post("/orders")
+      .set("Authorization", authorization)
+      .send({ items: [{ dishId: 7, quantity: 1 }] });
+
+    expect(created.status).toBe(201);
+
+    const forbidden = await request(app)
+      .patch("/orders/1/status")
+      .set("Authorization", authorization)
+      .send({ status: "PREPARING" });
+
+    expect(forbidden.status).toBe(403);
+
+    const cancelled = await request(app)
+      .patch("/orders/1/status")
+      .set("Authorization", authorization)
+      .send({ status: "CANCELLED" });
+
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.status).toBe("CANCELLED");
+
+    const repeated = await request(app)
+      .patch("/orders/1/status")
+      .set("Authorization", authorization)
+      .send({ status: "CANCELLED" });
+
+    expect(repeated.status).toBe(409);
+    expect(repeated.body.error.code).toBe("INVALID_TRANSITION");
   });
 });

@@ -5,7 +5,7 @@ API REST de click & collect pour le food truck La Roulotte.
 ## Palier visé et état
 
 - **Palier visé :** 
-- **État :** Palier 1
+- **État :** Palier 2
 
 ## Démarrage
 
