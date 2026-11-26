@@ -6,4 +6,9 @@ export class MenuService {
   listCategories() {
     return this.repo.findCategories();
   }
+
+  listAllergens() {
+    return this.repo.findAllergens();
+  }
+
 }

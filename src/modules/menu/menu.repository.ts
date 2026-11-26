@@ -6,4 +6,8 @@ export class MenuRepository {
   findCategories() {
     return this.db.category.findMany({ orderBy: { position: "asc" } });
   }
+
+  findAllergens() {
+    return this.db.allergen.findMany({ orderBy: { code: "asc" } });
+  }
 }

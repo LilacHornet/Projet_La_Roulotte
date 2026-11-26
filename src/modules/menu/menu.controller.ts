@@ -7,4 +7,9 @@ export class MenuController {
   listCategories = async (_req: Request, res: Response) => {
     res.json(await this.service.listCategories());
   };
+
+  listAllergens = async (_req: Request, res: Response) => {
+    res.json(await this.service.listAllergens());
+  };
+
 }
