@@ -11,6 +11,7 @@ export type MenuDishRecord = {
   priceCents: number;
   available: boolean;
   stock: number | null;
+  imageUrl: string | null;
   category: { id: number; name: string };
   allergens: { code: string; label: string }[];
 };
@@ -29,6 +30,7 @@ export interface MenuRepository {
   createDish(data: CreateDishInput): Promise<MenuDishRecord>;
   updateDish(id: number, data: UpdateDishInput): Promise<MenuDishRecord>;
   deleteDish(id: number): Promise<unknown>;
+  updateDishImage(id: number, imageUrl: string): Promise<MenuDishRecord>;
 }
 
 export class PrismaMenuRepository implements MenuRepository {
@@ -111,5 +113,13 @@ export class PrismaMenuRepository implements MenuRepository {
 
   deleteDish(id: number) {
     return this.db.dish.delete({ where: { id } });
+  }
+
+  updateDishImage(id: number, imageUrl: string) {
+    return this.db.dish.update({
+      where: { id },
+      data: { imageUrl },
+      include: { category: true, allergens: true },
+    });
   }
 }

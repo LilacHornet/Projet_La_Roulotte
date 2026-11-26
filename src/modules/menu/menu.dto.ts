@@ -57,6 +57,7 @@ export type DishDto = {
   priceCents: number;
   available: boolean;
   stock: number | null;
+  imageUrl: string | null;
   category: { id: number; name: string };
   allergens: { code: string; label: string }[];
 };
@@ -71,6 +72,7 @@ export function toDishDto(dish: DishRecord): DishDto {
     priceCents: dish.priceCents,
     available: dish.available,
     stock: dish.stock,
+    imageUrl: dish.imageUrl,
     category: { id: dish.category.id, name: dish.category.name },
     allergens: dish.allergens.map(({ code, label }) => ({ code, label })),
   };

@@ -8,6 +8,8 @@ import {
   type UpdateDishInput,
 } from "./menu.dto.js";
 import { AppError } from "../../errors/app-error.js";
+import { detectImageType } from "./image-upload.js";
+import { saveDishImage, deleteDishImage } from "./image-storage.js";
 
 export class MenuService {
   constructor(private repo: MenuRepository) {}
@@ -69,5 +71,19 @@ export class MenuService {
         throw new AppError(422, "INVALID_REFERENCE", "Code allergène inconnu");
       }
     }
+  }
+
+  async setDishImage(id: number, file: Buffer) {
+    const dish = await this.repo.findDishById(id);
+    if (!dish) throw new AppError(404, "NOT_FOUND", "Plat introuvable");
+
+    const ext = detectImageType(file);
+    if (!ext) throw new AppError(415, "UNSUPPORTED_MEDIA_TYPE", "Le fichier doit être une image PNG, JPEG ou WebP");
+
+    const imageUrl = await saveDishImage(file, ext);
+    const updated = await this.repo.updateDishImage(id, imageUrl);
+    if (dish.imageUrl) await deleteDishImage(dish.imageUrl);
+
+    return toDishDto(updated);
   }
 }

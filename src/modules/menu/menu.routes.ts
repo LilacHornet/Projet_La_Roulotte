@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Auth } from "../../fourni/auth/index.js";
 import type { MenuController } from "./menu.controller.js";
+import { receiveImage } from "./image-upload.js";
 
 export function menuRoutes(controller: MenuController, auth: Auth) {
   const router = Router();
@@ -9,6 +10,8 @@ export function menuRoutes(controller: MenuController, auth: Auth) {
   router.get("/allergens", controller.listAllergens);
   router.get("/dishes", controller.listDishes);
   router.get("/dishes/:id", controller.getDish);
+
+  router.put("/dishes/:id/image", adminOnly, receiveImage, controller.uploadImage);
 
   router.post("/dishes", adminOnly, controller.createDish);
   router.patch("/dishes/:id", adminOnly, controller.updateDish);
