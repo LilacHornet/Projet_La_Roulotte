@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import type { HealthService } from "./health.service.ts";
+import type { HealthService } from "./health.service.js";
 
 export type HealthController = {
     getHealth: RequestHandler;
