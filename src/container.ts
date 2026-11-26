@@ -1,6 +1,6 @@
-import { createHealthController } from "./modules/health/health.controller.ts";
-import { createHealthRouter } from "./modules/health/health.routes.ts";
-import { HealthService } from "./modules/health/health.service.ts";
+import { createHealthController } from "./modules/health/health.controller.js";
+import { createHealthRouter } from "./modules/health/health.routes.js";
+import { HealthService } from "./modules/health/health.service.js";
 
 const healthService = new HealthService();
 const healthController = createHealthController(healthService);
