@@ -27,5 +27,5 @@ const menuController = new MenuController(menuService);
 export const container = {
     auth,
     healthRouter: createHealthRouter(healthController),
-    menuRouter: menuRoutes(menuController),
+    menuRouter: menuRoutes(menuController, auth),
 };

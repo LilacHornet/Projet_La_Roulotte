@@ -13,6 +13,7 @@ type Menu = {
     category: string;
     allergens: string[];
     available: boolean;
+    stock: number | null;
   }[];
   users: { email: string; name: string; password: string; role: "CUSTOMER" | "STAFF" | "ADMIN" }[];
 };
@@ -39,6 +40,7 @@ async function main() {
         description: d.description,
         priceCents: d.priceCents,
         available: d.available,
+        stock: d.stock,
         category: { connect: { name: d.category } },
         allergens: { connect: d.allergens.map((code) => ({ code })) },
       },
