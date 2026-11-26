@@ -12,9 +12,8 @@ export function createApp() {
 
     app.use("/auth", container.auth.router);
     app.use("/health", container.healthRouter);
-
     app.use(container.menuRouter);
-
+    app.use("/orders", container.ordersRouter);
     app.use(notFoundHandler);
     app.use(authErrorHandler);
     app.use(errorHandler);

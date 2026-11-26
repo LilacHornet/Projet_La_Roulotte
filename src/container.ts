@@ -9,6 +9,10 @@ import { MenuService } from "./modules/menu/menu.service.js";
 import { MenuController } from "./modules/menu/menu.controller.js";
 import { menuRoutes } from "./modules/menu/menu.routes.js";
 import { UserRepository } from "./modules/users/user.repository.js";
+import { PrismaOrderRepository } from "./modules/orders/order.repository.js";
+import { OrderService } from "./modules/orders/order.service.js";
+import { createOrderController } from "./modules/orders/order.controller.js";
+import { createOrdersRouter } from "./modules/orders/order.routes.js";
 
 const healthService = new HealthService();
 const healthController = createHealthController(healthService);
@@ -23,9 +27,14 @@ const auth = createAuth({
 const menuRepository = new MenuRepository(prisma);
 const menuService = new MenuService(menuRepository);
 const menuController = new MenuController(menuService);
+const orderRepository = new PrismaOrderRepository();
+const orderService = new OrderService(orderRepository);
+const orderController = createOrderController(orderService);
+const ordersRouter = createOrdersRouter(orderController, auth);
 
 export const container = {
     auth,
     healthRouter: createHealthRouter(healthController),
     menuRouter: menuRoutes(menuController),
+    ordersRouter,
 };
