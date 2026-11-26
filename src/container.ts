@@ -13,6 +13,7 @@ import { PrismaOrderRepository } from "./modules/orders/order.repository.js";
 import { OrderService } from "./modules/orders/order.service.js";
 import { createOrderController } from "./modules/orders/order.controller.js";
 import { createOrdersRouter } from "./modules/orders/order.routes.js";
+import { CachedMenuRepository } from "./modules/menu/menu.cache.js";
 
 const healthService = new HealthService();
 const healthController = createHealthController(healthService);
@@ -24,7 +25,7 @@ const auth = createAuth({
     jwtExpiresIn: config.jwtExpiresIn,
 });
 
-const menuRepository = new PrismaMenuRepository(prisma);
+const menuRepository = new CachedMenuRepository(new PrismaMenuRepository(prisma));
 const menuService = new MenuService(menuRepository);
 const menuController = new MenuController(menuService);
 const orderRepository = new PrismaOrderRepository();
