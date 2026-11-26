@@ -10,6 +10,7 @@ import { createOrderController } from "../../src/modules/orders/order.controller
 import {  type DishForOrder,  type NewOrder,  type OrderRecord,  type OrderRepository,} from "../../src/modules/orders/order.repository.js";
 import { createOrdersRouter } from "../../src/modules/orders/order.routes.js";
 import { OrderService } from "../../src/modules/orders/order.service.js";
+import { OrderStatus } from "../../src/generated/prisma/enums.js";
 
 function makeTestApp() {
   const users: StoredUser[] = [];
@@ -68,7 +69,7 @@ function makeTestApp() {
     },
     async list(filters) {
       const filtered = orders.filter(
-        (order) => filters.userId === undefined || order.user.id === filters.userId,
+        (order) => filters.userId === undefined || order.user.id === filters.userId
       );
 
       return {
@@ -79,6 +80,9 @@ function makeTestApp() {
     async findById(id) {
       return orders.find((order) => order.id === id) ?? null;
     },
+    updateStatus: function (id: number, expectedStatus: OrderStatus, newStatus: OrderStatus): Promise<OrderRecord | null> {
+      throw new Error("Function not implemented.");
+    }
   };
 
   const healthRouter = createHealthRouter(

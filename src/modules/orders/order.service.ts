@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AppError } from "../../errors/app-error.js";
-import { toOrderDto } from "./order.dto.js";
+import { toOrderDto, updateOrderStatusSchema } from "./order.dto.js";
 import type { OrderRepository } from "./order.repository.js";
 import type { AuthUser } from "../../fourni/auth/index.js";
 import type { OrderStatus } from "../../generated/prisma/enums.js";
@@ -35,6 +35,14 @@ const orderIdSchema = z
     .regex(/^[1-9]\d*$/)
     .transform(Number)
     .refine(Number.isSafeInteger);
+
+const allowedTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
+    RECEIVED: ["PREPARING", "CANCELLED"],
+    PREPARING: ["READY", "CANCELLED"],
+    READY: ["PICKED_UP", "CANCELLED"],
+    PICKED_UP: [],
+    CANCELLED: [],
+};
 
 export class OrderService {
     constructor(private readonly orders: OrderRepository) {}
@@ -183,5 +191,73 @@ export class OrderService {
         }
 
         return toOrderDto(order);
+    }
+
+    async updateStatus(user: AuthUser, rawId: unknown, rawBody: unknown) {
+        const parsedId = orderIdSchema.safeParse(rawId);
+
+        if (!parsedId.success) {
+            throw new AppError(400, "VALIDATION_ERROR", "Identifiant invalide", [
+                { path: "id", message: "L'identifiant doit être un entier positif" },
+            ]);
+        }
+
+        const parsedBody = updateOrderStatusSchema.safeParse(rawBody);
+
+        if (!parsedBody.success) {
+            throw new AppError(
+                400,
+                "VALIDATION_ERROR",
+                "Données invalides",
+                parsedBody.error.issues.map((issue) => ({
+                    path: issue.path.join("."),
+                    message: issue.message,
+                })),
+            );
+        }
+
+        const order = await this.orders.findById(parsedId.data);
+
+        if (!order) {
+            throw new AppError(404, "NOT_FOUND", "Commande introuvable");
+        }
+
+        if (user.role === "CUSTOMER" && order.user.id !== user.id) {
+            throw new AppError(404, "NOT_FOUND", "Commande introuvable");
+        }
+
+        const newStatus = parsedBody.data.status;
+
+        if (user.role === "CUSTOMER") {
+            if (newStatus !== "CANCELLED") {
+                throw new AppError(403, "FORBIDDEN", "Un client peut seulement annuler sa commande");
+            }
+
+            if (order.status !== "RECEIVED") {
+                throw new AppError(403, "FORBIDDEN", "Cette commande ne peut plus être annulée par le client");
+            }
+        }
+
+        if (!allowedTransitions[order.status].includes(newStatus)) {
+            throw new AppError(409, "INVALID_TRANSITION", "Transition de statut interdite");
+        }
+
+        const updatedOrder = await this.orders.updateStatus(
+            order.id,
+            order.status,
+            newStatus,
+        );
+
+        if (!updatedOrder) {
+            const currentOrder = await this.orders.findById(order.id);
+
+            if (!currentOrder) {
+                throw new AppError(404, "NOT_FOUND", "Commande introuvable");
+            }
+
+            throw new AppError(409, "INVALID_TRANSITION", "La commande a déjà changé de statut");
+        }
+
+        return toOrderDto(updatedOrder);
     }
 }

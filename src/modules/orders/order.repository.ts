@@ -45,6 +45,11 @@ export interface OrderRepository {
         sort: "asc" | "desc";
     }): Promise<{ items: OrderRecord[]; total: number }>;
     findById(id: number): Promise<OrderRecord | null>;
+    updateStatus(
+        id: number,
+        expectedStatus: OrderStatus,
+        newStatus: OrderStatus,
+    ): Promise<OrderRecord | null>;
 }
 
 export class PrismaOrderRepository implements OrderRepository {
@@ -111,6 +116,31 @@ export class PrismaOrderRepository implements OrderRepository {
     }
 
     findById(id: number): Promise<OrderRecord | null> {
+        return prisma.order.findUnique({
+            where: { id },
+            include: {
+                user: { select: { id: true, name: true } },
+                items: {
+                    include: { dish: { select: { name: true } } },
+                },
+            },
+        });
+    }
+
+    async updateStatus(
+        id: number,
+        expectedStatus: OrderStatus,
+        newStatus: OrderStatus,
+    ): Promise<OrderRecord | null> {
+        const result = await prisma.order.updateMany({
+            where: { id, status: expectedStatus },
+            data: { status: newStatus },
+        });
+
+        if (result.count === 0) {
+            return null;
+        }
+
         return prisma.order.findUnique({
             where: { id },
             include: {

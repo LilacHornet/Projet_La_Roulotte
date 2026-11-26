@@ -6,6 +6,7 @@ export type OrderController = {
     create: RequestHandler;
     list: RequestHandler;
     getById: RequestHandler;
+    updateStatus: RequestHandler;
 };
 
 export function createOrderController(service: OrderService): OrderController {
@@ -26,6 +27,15 @@ export function createOrderController(service: OrderService): OrderController {
             const order = await service.getById(
                 currentUser(req),
                 req.params.id,
+            );
+
+            res.json(order);
+        },
+        updateStatus: async (req, res) => {
+            const order = await service.updateStatus(
+                currentUser(req),
+                req.params.id,
+                req.body,
             );
 
             res.json(order);

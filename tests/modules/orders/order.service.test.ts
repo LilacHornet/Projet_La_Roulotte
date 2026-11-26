@@ -82,6 +82,22 @@ function makeRepository(options: {
             calls.foundIds.push(id);
             return options.orderById ?? null;
         },
+        async updateStatus(id, expectedStatus, newStatus) {
+            const order = options.orderById;
+
+            if (!order || order.id !== id || order.status !== expectedStatus) {
+                return null;
+            }
+
+            const updatedOrder = {
+                ...order,
+                status: newStatus,
+                updatedAt: new Date("2026-11-26T10:05:00.000Z"),
+            };
+
+            options.orderById = updatedOrder;
+            return updatedOrder;
+        },
     };
 
     return { repository, calls };
@@ -243,6 +259,7 @@ describe("OrderService.list", () => {
 
         await expect(service.list(customer, { status: "UNKNOWN" }))
             .rejects.toMatchObject({ status: 400, code: "VALIDATION_ERROR" });
+
         await expect(service.list(customer, { pageSize: "51" }))
             .rejects.toMatchObject({ status: 400, code: "VALIDATION_ERROR" });
 
