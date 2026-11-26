@@ -20,6 +20,13 @@ export function createApp(container: AppContainer) {
 
   installSecurity(app, { corsOrigin: container.corsOrigin });
 
+  app.use(
+      "/uploads",
+      express.static("uploads", {
+        setHeaders: (res) => res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"),
+      }),
+    );
+
     app.use("/auth", container.auth.router);
     app.use("/health", container.healthRouter);
     app.use(container.menuRouter);

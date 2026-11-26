@@ -63,4 +63,9 @@ export class MenuController {
     res.status(204).end();
   };
 
+  uploadImage = async (req: Request, res: Response) => {
+    const { id } = idParamSchema.parse(req.params);
+    res.json(await this.service.setDishImage(id, req.file!.buffer));
+  };
+
 }
