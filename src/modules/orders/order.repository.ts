@@ -1,4 +1,5 @@
 import { prisma } from "../../db/prisma.js";
+import type { OrderStatus } from "../../generated/prisma/enums.js";
 
 export type DishForOrder = {
     id: number;
@@ -36,6 +37,14 @@ export type NewOrder = {
 export interface OrderRepository {
     findDishesByIds(ids: number[]): Promise<DishForOrder[]>;
     create(data: NewOrder): Promise<OrderRecord>;
+    list(filters: {
+        userId?: number;
+        statuses?: OrderStatus[];
+        skip: number;
+        take: number;
+        sort: "asc" | "desc";
+    }): Promise<{ items: OrderRecord[]; total: number }>;
+    findById(id: number): Promise<OrderRecord | null>;
 }
 
 export class PrismaOrderRepository implements OrderRepository {
@@ -61,6 +70,49 @@ export class PrismaOrderRepository implements OrderRepository {
                     })),
                 },
             },
+            include: {
+                user: { select: { id: true, name: true } },
+                items: {
+                    include: { dish: { select: { name: true } } },
+                },
+            },
+        });
+    }
+
+    async list(filters: {
+        userId?: number;
+        statuses?: OrderStatus[];
+        skip: number;
+        take: number;
+        sort: "asc" | "desc";
+    }): Promise<{ items: OrderRecord[]; total: number }> {
+        const where = {
+            ...(filters.userId === undefined ? {} : { userId: filters.userId }),
+            ...(filters.statuses?.length
+                ? { status: { in: filters.statuses } }
+                : {}),
+        };
+
+        const [items, total] = await prisma.$transaction([
+            prisma.order.findMany({
+                where,
+                skip: filters.skip,
+                take: filters.take,
+                orderBy: { createdAt: filters.sort },
+                include: {
+                    user: { select: { id: true, name: true } },
+                    items: { include: { dish: { select: { name: true } } } },
+                },
+            }),
+            prisma.order.count({ where }),
+        ]);
+
+        return { items, total };
+    }
+
+    findById(id: number): Promise<OrderRecord | null> {
+        return prisma.order.findUnique({
+            where: { id },
             include: {
                 user: { select: { id: true, name: true } },
                 items: {

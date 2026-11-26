@@ -9,6 +9,8 @@ export function createOrdersRouter(
     const router = Router();
 
     router.post("/", auth.requireAuth, controller.create);
+    router.get("/", auth.requireAuth, controller.list);
+    router.get("/:id", auth.requireAuth, controller.getById);
 
     return router;
 }
