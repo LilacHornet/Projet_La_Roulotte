@@ -1,14 +1,24 @@
-import express from "express";
-import {authErrorHandler,installSecurity,} from "./fourni/auth/index.js";
-import { config } from "./config.js";
-import { container } from "./container.js";
+import express, { type Router } from "express";
+import {
+  authErrorHandler,
+  installSecurity,
+  type Auth,
+} from "./fourni/auth/index.js";
 import { notFoundHandler } from "./errors/not-found.middleware.js";
 import { errorHandler } from "./errors/error.middleware.js";
 
-export function createApp() {
-    const app = express();
+export type AppContainer = {
+  auth: Auth;
+  healthRouter: Router;
+  menuRouter: Router;
+  ordersRouter: Router;
+  corsOrigin: string;
+};
 
-    installSecurity(app, { corsOrigin: config.corsOrigin });
+export function createApp(container: AppContainer) {
+  const app = express();
+
+  installSecurity(app, { corsOrigin: container.corsOrigin });
 
     app.use("/auth", container.auth.router);
     app.use("/health", container.healthRouter);
@@ -19,4 +29,4 @@ export function createApp() {
     app.use(errorHandler);
 
     return app;
-}
+    }

@@ -4,7 +4,7 @@ import { prisma } from "./db/prisma.js";
 import { createHealthController } from "./modules/health/health.controller.js";
 import { createHealthRouter } from "./modules/health/health.routes.js";
 import { HealthService } from "./modules/health/health.service.js";
-import { MenuRepository } from "./modules/menu/menu.repository.js";
+import { PrismaMenuRepository } from "./modules/menu/menu.repository.js";
 import { MenuService } from "./modules/menu/menu.service.js";
 import { MenuController } from "./modules/menu/menu.controller.js";
 import { menuRoutes } from "./modules/menu/menu.routes.js";
@@ -24,7 +24,7 @@ const auth = createAuth({
     jwtExpiresIn: config.jwtExpiresIn,
 });
 
-const menuRepository = new MenuRepository(prisma);
+const menuRepository = new PrismaMenuRepository(prisma);
 const menuService = new MenuService(menuRepository);
 const menuController = new MenuController(menuService);
 const orderRepository = new PrismaOrderRepository();
@@ -37,4 +37,5 @@ export const container = {
     healthRouter: createHealthRouter(healthController),
     menuRouter: menuRoutes(menuController),
     ordersRouter,
+    corsOrigin: config.corsOrigin,
 };

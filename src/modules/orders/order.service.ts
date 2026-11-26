@@ -23,7 +23,7 @@ const statusSchema = z.enum([
     "CANCELLED",
 ]);
 
-const listOrdersQuerySchema = z.object({
+const listOrdersQuerySchema = z.strictObject({
     status: z.string().optional(),
     sort: z.enum(["createdAt", "-createdAt"]).default("-createdAt"),
     page: z.coerce.number().int().min(1).default(1),
