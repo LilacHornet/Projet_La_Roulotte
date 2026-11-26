@@ -7,6 +7,8 @@ export function createApp() {
 
     app.use("/health", container.healthRouter);
 
+    app.use(container.menuRouter);
+
     app.use(notFoundHandler);
 
     return app;
