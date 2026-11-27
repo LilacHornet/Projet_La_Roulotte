@@ -4,8 +4,8 @@ API REST de click & collect pour le food truck La Roulotte.
 
 ## Palier visé et état
 
-- **Palier visé :** 
-- **État :** Palier 2
+- **Palier visé :** Palier 3
+- **État :** Palier 3
 
 ## Démarrage
 
@@ -67,7 +67,27 @@ L’application sépare les responsabilités par domaine : routes, contrôleurs,
 
 Le module `src/fourni/auth/` est fourni et ne doit pas être modifié. Le repository utilisateur qui le relie à Prisma se trouve dans `src/modules/users/user.repository.ts`.
 
-## Répartition du travail
+### Répartition des tâches
 
-- **Hadrien :** [tâches et fichiers réalisés]
-- **Corentin :** [tâches et fichiers réalisés]
+| Tâche | Hadrien | Corentin |
+|---|:---:|:---:|
+| Création des dossiers `src/modules/menu`, `src/modules/orders`, `src/modules/users`, `src/fourni/auth` et `prisma/` | ✅ | ✅ |
+| Ajout de `.env`, `.env.example` et `.gitignore` | ✅ | ✅ |
+| Schéma Prisma, première migration et génération du client Prisma | ✅ | |
+| Configuration : `config.ts`, `app.ts`, `container.ts`, gestionnaire d’erreurs, route 404 et `GET /health` | | ✅ |
+| Module Menu : catégories, allergènes, plats et filtres | ✅ | |
+| Module Users et branchement du module d’authentification fourni | | ✅ |
+| Module Orders : `POST /orders` et `GET /orders` | | ✅ |
+| Administration des plats : `POST /dishes`, `PATCH /dishes/:id` et `DELETE /dishes/:id` | ✅ | |
+| Tests du projet | | ✅ |
+| `PATCH /orders/:id/status` | | ✅ |
+| Gestion du rôle `ADMIN` | ✅ | |
+| Gestion du stock des plats | | ✅ |
+| Photos des plats : `PUT /dishes/:id/image` | ✅ | |
+| SSE : route `/events` et diffusion des événements | ✅ | |
+| Décorateur de cache de la carte | ✅ | |
+| Décorateur de cache des commandes | ✅ | |
+| Healthcheck avec vérification de la base de données | | ✅ |
+| Identifiant de requête `X-Request-Id` | ✅ | |
+| Vérifications et tests finaux | ✅ | ✅ |
+| Rédaction du README | | ✅ |
