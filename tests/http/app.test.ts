@@ -108,7 +108,7 @@ function makeTestApp() {
   };
 
   const healthRouter = createHealthRouter(
-    createHealthController(new HealthService()),
+    createHealthController(new HealthService(async () => {})),
   );
   const ordersRouter = createOrdersRouter(
     createOrderController(new OrderService(orderRepository)),
@@ -156,7 +156,7 @@ describe("HTTP API", () => {
     const response = await request(app).get("/health");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ status: "ok" });
+    expect(response.body).toEqual({ status: "ok", database: "up" });
   });
 
   it("protège les commandes et traite une commande authentifiée", async () => {

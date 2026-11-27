@@ -17,7 +17,9 @@ import { CachedMenuRepository } from "./modules/menu/menu.cache.js";
 import { EventBus } from "./modules/events/event-bus.js";
 import { createEventsRouter } from "./modules/events/events.routes.js";
 
-const healthService = new HealthService();
+const healthService = new HealthService(async () => {
+    await prisma.$queryRaw`SELECT 1`;
+});
 const healthController = createHealthController(healthService);
 const users = new UserRepository();
 const eventBus = new EventBus();
