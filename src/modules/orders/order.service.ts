@@ -45,7 +45,10 @@ const allowedTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
 };
 
 export class OrderService {
-    constructor(private readonly orders: OrderRepository) {}
+    constructor(
+        private readonly orders: OrderRepository,
+        private readonly menuCache: { invalidate(): void } = { invalidate() {} },
+    ) {}
 
     async place(userId: number, body: unknown) {
         const parsed = orderSchema.safeParse(body);
@@ -132,6 +135,8 @@ export class OrderService {
             totalCents,
             items,
         });
+
+        this.menuCache.invalidate();
 
         return toOrderDto(order);
     }
