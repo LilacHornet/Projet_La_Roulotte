@@ -14,10 +14,13 @@ import { OrderService } from "./modules/orders/order.service.js";
 import { createOrderController } from "./modules/orders/order.controller.js";
 import { createOrdersRouter } from "./modules/orders/order.routes.js";
 import { CachedMenuRepository } from "./modules/menu/menu.cache.js";
+import { EventBus } from "./modules/events/event-bus.js";
+import { createEventsRouter } from "./modules/events/events.routes.js";
 
 const healthService = new HealthService();
 const healthController = createHealthController(healthService);
 const users = new UserRepository();
+const eventBus = new EventBus();
 
 const auth = createAuth({
     users,
@@ -28,8 +31,9 @@ const auth = createAuth({
 const menuRepository = new CachedMenuRepository(new PrismaMenuRepository(prisma));
 const menuService = new MenuService(menuRepository);
 const menuController = new MenuController(menuService);
+
 const orderRepository = new PrismaOrderRepository();
-const orderService = new OrderService(orderRepository, menuRepository);
+const orderService = new OrderService(orderRepository, menuRepository, eventBus);
 const orderController = createOrderController(orderService);
 const ordersRouter = createOrdersRouter(orderController, auth);
 
@@ -40,4 +44,5 @@ export const container = {
     menuRouter: menuRoutes(menuController, auth),
     ordersRouter,
     corsOrigin: config.corsOrigin,
+    eventsRouter: createEventsRouter(eventBus, auth),
 };

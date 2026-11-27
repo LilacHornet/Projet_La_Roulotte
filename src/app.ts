@@ -12,6 +12,7 @@ export type AppContainer = {
   healthRouter: Router;
   menuRouter: Router;
   ordersRouter: Router;
+  eventsRouter: Router; 
   corsOrigin: string;
 };
 
@@ -31,6 +32,7 @@ export function createApp(container: AppContainer) {
     app.use("/health", container.healthRouter);
     app.use(container.menuRouter);
     app.use("/orders", container.ordersRouter);
+    app.use("/events", container.eventsRouter);
     app.use(notFoundHandler);
     app.use(authErrorHandler);
     app.use(errorHandler);
