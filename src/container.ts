@@ -29,9 +29,10 @@ const menuRepository = new CachedMenuRepository(new PrismaMenuRepository(prisma)
 const menuService = new MenuService(menuRepository);
 const menuController = new MenuController(menuService);
 const orderRepository = new PrismaOrderRepository();
-const orderService = new OrderService(orderRepository);
+const orderService = new OrderService(orderRepository, menuRepository);
 const orderController = createOrderController(orderService);
 const ordersRouter = createOrdersRouter(orderController, auth);
+
 
 export const container = {
     auth,
