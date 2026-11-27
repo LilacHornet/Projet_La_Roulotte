@@ -67,7 +67,7 @@ L’application sépare les responsabilités par domaine : routes, contrôleurs,
 
 Le module `src/fourni/auth/` est fourni et ne doit pas être modifié. Le repository utilisateur qui le relie à Prisma se trouve dans `src/modules/users/user.repository.ts`.
 
-### Répartition des tâches
+## Répartition des tâches
 
 | Tâche | Hadrien | Corentin |
 |---|:---:|:---:|
@@ -91,3 +91,7 @@ Le module `src/fourni/auth/` est fourni et ne doit pas être modifié. Le reposi
 | Identifiant de requête `X-Request-Id` | ✅ | |
 | Vérifications et tests finaux | ✅ | ✅ |
 | Rédaction du README | | ✅ |
+
+## Screen du statut de l'API
+
+![alt text](image.png)
