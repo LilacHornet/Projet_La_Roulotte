@@ -6,6 +6,7 @@ import {
 } from "./fourni/auth/index.js";
 import { notFoundHandler } from "./errors/not-found.middleware.js";
 import { errorHandler } from "./errors/error.middleware.js";
+import { requestId } from "./modules/middlewares/request-id.js";
 
 export type AppContainer = {
   auth: Auth;
@@ -18,6 +19,8 @@ export type AppContainer = {
 
 export function createApp(container: AppContainer) {
   const app = express();
+
+  app.use(requestId);
 
   installSecurity(app, { corsOrigin: container.corsOrigin });
 
