@@ -7,8 +7,9 @@ export type HealthController = {
 
 export function createHealthController(service: HealthService): HealthController {
     return {
-        getHealth: (_req, res) => {
-            res.status(200).json(service.getStatus());
+        getHealth: async (_req, res) => {
+            const result = await service.getStatus();
+            res.status(result.database === "up" ? 200 : 503).json(result);
         },
     };
 }

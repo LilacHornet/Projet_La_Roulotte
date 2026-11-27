@@ -15,7 +15,9 @@ import { createOrderController } from "./modules/orders/order.controller.js";
 import { createOrdersRouter } from "./modules/orders/order.routes.js";
 import { CachedMenuRepository } from "./modules/menu/menu.cache.js";
 
-const healthService = new HealthService();
+const healthService = new HealthService(async () => {
+    await prisma.$queryRaw`SELECT 1`;
+});
 const healthController = createHealthController(healthService);
 const users = new UserRepository();
 
