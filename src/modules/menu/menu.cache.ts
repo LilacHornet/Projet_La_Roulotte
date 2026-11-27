@@ -24,10 +24,10 @@ export class CachedMenuRepository implements MenuRepository {
     return this.remember("allergens", () => this.inner.findAllergens());
   }
   findDishById(id: number) {
-    return this.remember(`dish:${id}`, () => this.inner.findDishById(id));
+    return this.inner.findDishById(id);
   }
   findDishes(query: DishesQuery) {
-    return this.remember(`dishes:${JSON.stringify(query)}`, () => this.inner.findDishes(query));
+    return this.inner.findDishes(query);
   }
 
   findDishByName(name: string) {
