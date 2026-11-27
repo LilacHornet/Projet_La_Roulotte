@@ -11,6 +11,8 @@ import {  type DishForOrder,  type NewOrder,  type OrderRecord,  type OrderRepos
 import { createOrdersRouter } from "../../src/modules/orders/order.routes.js";
 import { OrderService } from "../../src/modules/orders/order.service.js";
 import { OrderStatus } from "../../src/generated/prisma/enums.js";
+import { EventBus } from "../../src/modules/events/event-bus.js";
+import { createEventsRouter } from "../../src/modules/events/events.routes.js";
 
 function makeTestApp() {
   const users: StoredUser[] = [];
@@ -119,6 +121,7 @@ function makeTestApp() {
     menuRouter: Router(),
     ordersRouter,
     corsOrigin: "http://localhost:5173",
+    eventsRouter: createEventsRouter(new EventBus(), auth),
   });
 }
 

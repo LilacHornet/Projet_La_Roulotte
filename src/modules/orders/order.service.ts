@@ -48,6 +48,9 @@ export class OrderService {
     constructor(
         private readonly orders: OrderRepository,
         private readonly menuCache: { invalidate(): void } = { invalidate() {} },
+        private readonly events: {
+            publish(type: "order.created" | "order.updated", order: { id: number; customer: { id: number } }): void;
+        } = { publish() {} },
     ) {}
 
     async place(userId: number, body: unknown) {
@@ -138,7 +141,9 @@ export class OrderService {
 
         this.menuCache.invalidate();
 
-        return toOrderDto(order);
+        const dto = toOrderDto(order);
+        this.events.publish("order.created", dto);
+        return dto
     }
 
     async list(user: AuthUser, rawQuery: unknown) {
@@ -284,6 +289,12 @@ export class OrderService {
             throw new AppError(409, "INVALID_TRANSITION", "La commande a déjà changé de statut");
         }
 
-        return toOrderDto(updatedOrder);
+        if (newStatus === "CANCELLED") {
+            this.menuCache.invalidate();
+        }
+
+        const dto = toOrderDto(updatedOrder);
+        this.events.publish("order.updated", dto);
+        return dto;
     }
 }

@@ -12,6 +12,6 @@ export async function saveDishImage(buffer: Buffer, ext: string) {
 }
 
 export async function deleteDishImage(imageUrl: string) {
-  const filename = path.basename(imageUrl); // on garde seulement le nom → impossible de sortir du dossier
+  const filename = path.basename(imageUrl);
   await unlink(path.join(DISHES_DIR, filename)).catch(() => {});
 }
